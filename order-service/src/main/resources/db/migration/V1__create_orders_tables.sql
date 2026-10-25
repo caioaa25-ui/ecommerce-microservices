@@ -1,0 +1,15 @@
+CREATE TABLE orders (
+    id BIGSERIAL PRIMARY KEY,
+    status VARCHAR(20) NOT NULL,
+    total NUMERIC(14,2) NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE order_items (
+    id BIGSERIAL PRIMARY KEY,
+    order_id BIGINT NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
+    product_id BIGINT NOT NULL,
+    product_name VARCHAR(150) NOT NULL,
+    unit_price NUMERIC(12,2) NOT NULL,
+    quantity INTEGER NOT NULL
+);
