@@ -1,11 +1,11 @@
 package com.ecommerce.order.sales;
 
+import com.ecommerce.order.messaging.OrderEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -13,33 +13,23 @@ public class OrderService {
 
     private final PurchaseOrderRepository repository;
     private final ProductClient productClient;
+    private final OrderEventPublisher publisher;
 
-    public OrderService(PurchaseOrderRepository repository, ProductClient productClient) {
+    public OrderService(PurchaseOrderRepository repository, ProductClient productClient, OrderEventPublisher publisher) {
         this.repository = repository;
         this.productClient = productClient;
+        this.publisher = publisher;
     }
 
-    @Transactional
     public OrderResponse create(OrderRequest request) {
         PurchaseOrder order = new PurchaseOrder();
-        List<OrderItemRequest> reserved = new ArrayList<>();
-        try {
-            for (OrderItemRequest item : request.items()) {
-                ProductInfo product = productClient.getProduct(item.productId());
-                productClient.adjustStock(item.productId(), -item.quantity());
-                reserved.add(item);
-                order.addItem(new OrderItem(product.id(), product.name(), product.price(), item.quantity()));
-            }
-            return OrderResponse.from(repository.save(order));
-        } catch (RuntimeException e) {
-            for (OrderItemRequest item : reserved) {
-                try {
-                    productClient.adjustStock(item.productId(), item.quantity());
-                } catch (RuntimeException ignored) {
-                }
-            }
-            throw e;
+        for (OrderItemRequest item : request.items()) {
+            ProductInfo product = productClient.getProduct(item.productId());
+            order.addItem(new OrderItem(product.id(), product.name(), product.price(), item.quantity()));
         }
+        PurchaseOrder saved = repository.save(order);
+        publisher.orderCreated(saved);
+        return OrderResponse.from(saved);
     }
 
     @Transactional(readOnly = true)

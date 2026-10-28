@@ -38,7 +38,7 @@ public class PurchaseOrder {
     private List<OrderItem> items = new ArrayList<>();
 
     public PurchaseOrder() {
-        this.status = OrderStatus.CREATED;
+        this.status = OrderStatus.PENDING;
         this.total = BigDecimal.ZERO;
         this.createdAt = LocalDateTime.now();
     }
@@ -54,4 +54,7 @@ public class PurchaseOrder {
     public BigDecimal getTotal() { return total; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public List<OrderItem> getItems() { return items; }
+
+    public void confirm() { this.status = OrderStatus.CONFIRMED; }
+    public void cancel() { this.status = OrderStatus.CANCELLED; }
 }
