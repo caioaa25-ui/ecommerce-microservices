@@ -1,3 +1,4 @@
+
 package com.ecommerce.gateway;
 
 import org.springframework.boot.SpringApplication;
